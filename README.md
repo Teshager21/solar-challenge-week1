@@ -34,4 +34,26 @@ To reproduce the development environment, please follow these steps:
     pre-commit install
     ```
 
-    This will install and set up pre-commit to run the checks before commiting
+    This will install and set up pre-commit to run the checks before committing
+
+## 📁 Project Structure
+
+    📦 TheProjectRoot/
+    ├── .vscode/                  # Visual Studio Code settings
+    │   └── settings.json
+    ├── .github/                 # GitHub Actions workflows
+    │   └── workflows/
+    │       └── unittests.yml
+    ├── .gitignore               # Git ignored files
+    ├── requirements.txt         # Python dependencies
+    ├── README.md                # Project overview and setup instructions
+    ├── data/                    # Input/output datasets or temporary data files
+    ├── src/                     # Main application source code
+    ├── notebooks/               # Jupyter notebooks for experiments or analysis
+    │   ├── __init__.py
+    │   └── README.md
+    ├── tests/                   # Unit and integration tests
+    │   └── __init__.py
+    └── scripts/                 # Utility scripts or CLI tools
+        ├── __init__.py
+        └── README.md
