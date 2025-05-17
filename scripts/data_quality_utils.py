@@ -156,8 +156,8 @@ def impute_ghi_with_linear_regression(df: pd.DataFrame, features=['ModB', 'ModA'
     # Fit the model
     model.fit(train_data[features], train_data[target])
 
-    # Predict and fill missing target values
-    predicted_values = model.predict(predict_data[features])
+    # Predict and fill missing target values (rounded to 1 decimal place)
+    predicted_values = np.round(model.predict(predict_data[features]), 1)
     df_copy.loc[predict_data.index, target] = predicted_values
 
     return df_copy
@@ -197,7 +197,8 @@ def impute_multiple_targets_with_model(
 
         model = model_cls(**model_kwargs)
         model.fit(available[feature_cols], available[target])
-        df_copy.loc[missing.index, target] = model.predict(missing[feature_cols])
+        # Predict and round to 1 decimal place
+        df_copy.loc[missing.index, target] = np.round(model.predict(missing[feature_cols]), 1)
 
     return df_copy
 
