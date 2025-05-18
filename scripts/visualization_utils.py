@@ -402,3 +402,24 @@ def plot_outlier_boxplots(df, columns_to_check_for_outliers):
     plt.yticks(fontsize=12)
     plt.tight_layout()
     plt.show()
+
+def filter_daytime(df, timestamp_col='Timestamp', start_hour=6, end_hour=18):
+    """
+    Returns a DataFrame containing only the rows where the timestamp is during daytime hours.
+
+    Parameters:
+    - df: pandas DataFrame
+    - timestamp_col: name of the column with datetime information (default: 'Timestamp')
+    - start_hour: start of the daytime in 24h format (default: 6 for 6 AM)
+    - end_hour: end of the daytime in 24h format (default: 18 for 6 PM)
+
+    Returns:
+    - Filtered DataFrame with only daytime records
+    """
+    if not pd.api.types.is_datetime64_any_dtype(df[timestamp_col]):
+        df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+
+    daytime_df = df[(df[timestamp_col].dt.hour >= start_hour) & 
+                    (df[timestamp_col].dt.hour < end_hour)]
+    
+    return daytime_df
