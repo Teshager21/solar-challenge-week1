@@ -219,3 +219,27 @@ def replace_negative_irradiance_with_nan(df):
         if col in df.columns:
             df.loc[df[col] < 0, col] = np.nan
     return df
+
+def get_outlier_counts(df, columns_to_check_for_outliers):
+    """
+    Returns a DataFrame with the number of outliers (z-score > 3 or < -3) for each specified column.
+
+    Parameters:
+    - df (pd.DataFrame): Input DataFrame.
+    - columns_to_check_for_outliers (list): List of column names to check for outliers.
+
+    Returns:
+    - pd.DataFrame: DataFrame with columns ['column', 'num_outliers'].
+    """
+    outlier_counts = {
+        "column": [],
+        "num_outliers": []
+    }
+
+    for col in columns_to_check_for_outliers:
+        outliers = detect_outliers_zscore(df, col)
+        outlier_counts["column"].append(col)
+        outlier_counts["num_outliers"].append(len(outliers))
+
+    outlier_df = pd.DataFrame(outlier_counts)
+    return outlier_df

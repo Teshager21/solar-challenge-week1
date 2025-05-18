@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from windrose import WindroseAxes
+from scipy.stats import zscore
+
 
 
 def plot_continuous_histograms(df, n_cols=3, bins=30, color='teal'):
@@ -342,3 +344,82 @@ def plot_pairplot(df, columns):
     sns.pairplot(pairplot_df, diag_kind='kde', corner=True, plot_kws={'alpha': 0.5})
     plt.suptitle("Pair Plot of Selected Solar Variables", y=1.02, fontsize=14)
     plt.show()
+
+
+def plot_outlier_stripplots(df, columns_to_check_for_outliers):
+    """
+    Plots Z-score strip plots for the specified columns to visualize outliers.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing the columns.
+        columns_to_check_for_outliers (list): List of column names to plot.
+
+    Returns:
+        None
+    """
+   
+    n_cols = 2  # adjust as needed
+    n_rows = (len(columns_to_check_for_outliers) + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=(8 * n_cols, 2 * n_rows))
+    axes = axes.flatten()
+
+    for i, col in enumerate(columns_to_check_for_outliers):
+        df['z'] = zscore(df[col].dropna())
+        sns.stripplot(x='z', data=df.dropna(subset=[col]), color='orange', ax=axes[i])
+        axes[i].axvline(3, color='red', linestyle='--')
+        axes[i].axvline(-3, color='red', linestyle='--')
+        axes[i].set_title(f'Z-score Strip Plot: {col}')
+        axes[i].set_xlabel('Z-score')
+
+    # Remove unused axes if any
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.tight_layout()
+    plt.show()
+    # Clean up temporary column
+    if 'z' in df.columns:
+        df.drop(columns=['z'], inplace=True)
+
+
+def plot_outlier_boxplots(df, columns_to_check_for_outliers):
+    """
+    Plots boxplots for the specified columns to visualize outliers.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing the columns.
+        columns_to_check_for_outliers (list): List of column names to plot.
+
+    Returns:
+        None
+    """
+    plt.figure(figsize=(max(8, len(columns_to_check_for_outliers) * 1.5), 6))  # Auto-adjust width
+    sns.set_context("notebook", font_scale=1.1)
+    sns.boxplot(data=df[columns_to_check_for_outliers], palette="Set2")
+    plt.title("Boxplot of Selected Columns (Outliers Visualized)", fontsize=14)
+    plt.xticks(rotation=45, fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.tight_layout()
+    plt.show()
+
+def filter_daytime(df, timestamp_col='Timestamp', start_hour=6, end_hour=18):
+    """
+    Returns a DataFrame containing only the rows where the timestamp is during daytime hours.
+
+    Parameters:
+    - df: pandas DataFrame
+    - timestamp_col: name of the column with datetime information (default: 'Timestamp')
+    - start_hour: start of the daytime in 24h format (default: 6 for 6 AM)
+    - end_hour: end of the daytime in 24h format (default: 18 for 6 PM)
+
+    Returns:
+    - Filtered DataFrame with only daytime records
+    """
+    if not pd.api.types.is_datetime64_any_dtype(df[timestamp_col]):
+        df[timestamp_col] = pd.to_datetime(df[timestamp_col])
+
+    daytime_df = df[(df[timestamp_col].dt.hour >= start_hour) & 
+                    (df[timestamp_col].dt.hour < end_hour)]
+    
+    return daytime_df
