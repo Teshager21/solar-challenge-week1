@@ -162,8 +162,8 @@ Contributions are welcome! Feel free to:
 
 - **Author:** Teshager Admasu
 - **GitHub:** [@Teshager21](https://github.com/Teshager21)
-- **LinkedIn:** [@Teshager Admasu](linkedin.com/in/teshager-admasu-531090191)
-- **Email:** [@Teshager](teshager8922@gmail.com)
+- **LinkedIn:** [@Teshager Admasu](https://www.linkedin.com/in/teshager-admasu-531090191)
+- **Gmail:** [@Teshager](mailto:teshager8922@gmail.com)
 
 ---
 
