@@ -423,3 +423,61 @@ def filter_daytime(df, timestamp_col='Timestamp', start_hour=6, end_hour=18):
                     (df[timestamp_col].dt.hour < end_hour)]
     
     return daytime_df
+
+
+def plot_boxplots_comparison(df):
+    """
+    Plots side-by-side boxplots for GHI, DNI, and DHI by country.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing at least 'country', 'GHI', 'DNI', and 'DHI' columns.
+    """
+    # Set Seaborn style
+    sns.set(style="whitegrid")
+
+    # Create figure and axes
+    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+
+    # Plot for GHI
+    sns.boxplot(x='country', y='GHI', data=df, ax=axes[0], palette="Set2")
+    axes[0].set_title('📦 GHI Distribution by Country', fontsize=14)
+    axes[0].set_xlabel('')
+    axes[0].set_ylabel('GHI (W/m²)', fontsize=12)
+
+    # Plot for DNI
+    sns.boxplot(x='country', y='DNI', data=df, ax=axes[1], palette="Set2")
+    axes[1].set_title('📦 DNI Distribution by Country', fontsize=14)
+    axes[1].set_xlabel('')
+    axes[1].set_ylabel('DNI (W/m²)', fontsize=12)
+
+    # Plot for DHI
+    sns.boxplot(x='country', y='DHI', data=df, ax=axes[2], palette="Set2")
+    axes[2].set_title('📦 DHI Distribution by Country', fontsize=14)
+    axes[2].set_xlabel('')
+    axes[2].set_ylabel('DHI (W/m²)', fontsize=12)
+
+    # Super title
+    plt.suptitle('☀️ Solar Radiation Metrics by Country', fontsize=16, y=1.02)
+
+    # Adjust layout
+    plt.tight_layout()
+    plt.show()
+    
+def plot_avg_ghi_by_country(df):
+    """
+    Plots a horizontal bar chart of average GHI by country.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing 'country' and 'GHI' columns.
+
+    Returns:
+        None
+    """
+
+    avg_ghi = df.groupby('country')['GHI'].mean().sort_values(ascending=False)
+    sns.barplot(x=avg_ghi.values, y=avg_ghi.index, palette='viridis')
+    plt.title('Average GHI by Country')
+    plt.xlabel('Average GHI')
+    plt.ylabel('Country')
+    plt.tight_layout()
+    plt.show()
