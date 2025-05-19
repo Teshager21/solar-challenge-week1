@@ -1,24 +1,31 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import streamlit as st
+import os
+
+
 
 def load_data():
-    files = {
-        "Benin": "data/benin_clean.csv",
-        "Togo": "data/togo_clean.csv",
-        "Sierra Leone": "data/sierraleone_clean.csv"
-    }
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # folder where main.py lives
 
-    dfs = []
-    for country, path in files.items():
-        df = pd.read_csv(path)
-        df["country"] = country
-        dfs.append(df)
-    return pd.concat(dfs, ignore_index=True)
+    data_path_benin = os.path.join(BASE_DIR, '..', 'data', 'benin_clean.csv')
+    data_path_togo = os.path.join(BASE_DIR, '..', 'data', 'togo_clean.csv')
+    data_path_sl = os.path.join(BASE_DIR, '..', 'data', 'sierraleone_clean.csv')
 
-def plot_ghi_comparison(df):
-    st.subheader("📊 GHI Distribution")
-    fig, ax = plt.subplots()
-    sns.boxplot(x="country", y="GHI", data=df, ax=ax)
-    st.pyplot(fig)
+    df_benin = pd.read_csv(data_path_benin)
+    df_togo = pd.read_csv(data_path_togo)
+    df_sl = pd.read_csv(data_path_sl)
+
+    df_benin["country"] = "Benin"
+    df_togo["country"] = "Togo"
+    df_sl["country"] = "Sierra Leone"
+
+    df = pd.concat([df_benin, df_togo, df_sl], ignore_index=True)
+    return df
+
+def plot_ghi_comparison(df, metric):
+    sns.set(style="whitegrid")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.boxplot(data=df, x="country", y=metric, ax=ax, palette="Set2")
+    ax.set_title(f"{metric} Distribution by Country", fontsize=16)
+    return fig
