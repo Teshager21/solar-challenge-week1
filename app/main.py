@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import os
-from app.utils import load_data, plot_ghi_comparison
+# from app.utils import load_data, plot_ghi_comparison
+from utils import load_data, plot_ghi_comparison
 
 st.set_page_config(page_title="Solar Potential Dashboard", layout="wide")
 
