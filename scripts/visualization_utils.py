@@ -462,3 +462,22 @@ def plot_boxplots_comparison(df):
     # Adjust layout
     plt.tight_layout()
     plt.show()
+    
+def plot_avg_ghi_by_country(df):
+    """
+    Plots a horizontal bar chart of average GHI by country.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing 'country' and 'GHI' columns.
+
+    Returns:
+        None
+    """
+
+    avg_ghi = df.groupby('country')['GHI'].mean().sort_values(ascending=False)
+    sns.barplot(x=avg_ghi.values, y=avg_ghi.index, palette='viridis')
+    plt.title('Average GHI by Country')
+    plt.xlabel('Average GHI')
+    plt.ylabel('Country')
+    plt.tight_layout()
+    plt.show()
