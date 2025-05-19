@@ -4,7 +4,9 @@
 > A data-driven comparison of solar energy potential in Benin 🇧🇯, Sierra Leone 🇸🇱, and Togo 🇹🇬
 
 ---
+## 📸 Streamlit App Preview
 
+![Streamlit App Screenshot](images/streamlit.png)
 ## 📌 Overview
 
 This project was developed as part of the **10 Academy Week 1 Challenge**, aimed at assessing solar energy potential across three West African countries — **Benin**, **Sierra Leone**, and **Togo** — to support strategic investment decisions by **MoonLight Energy Solutions**.

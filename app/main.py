@@ -9,7 +9,7 @@ import os
 import sys
 from utils import load_data, plot_ghi_comparison
 
-st.write("Current working directory:", os.getcwd())
+# st.write("Current working directory:", os.getcwd())
 
 # Setup page
 # st.set_page_config(page_title="🌞 Solar Potential Dashboard", layout="wide")
