@@ -5,6 +5,15 @@
 
 ---
 
+An interactive dashboard to explore solar potential across Benin, Togo, and Sierra Leone.
+
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://solar-challenge-week1-duuesqvcmfbwlyew8ffis3.streamlit.app/)
+
+
+
+## 📸 Streamlit App Preview
+
+![Streamlit App Screenshot](images/streamlit.png)
 ## 📌 Overview
 
 This project was developed as part of the **10 Academy Week 1 Challenge**, aimed at assessing solar energy potential across three West African countries — **Benin**, **Sierra Leone**, and **Togo** — to support strategic investment decisions by **MoonLight Energy Solutions**.

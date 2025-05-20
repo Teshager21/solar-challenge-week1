@@ -5,3 +5,4 @@ scikit-learn==1.6.1
 scipy==1.13.1
 seaborn==0.13.2
 windrose==1.9.2
+streamlit
