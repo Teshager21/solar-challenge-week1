@@ -18,18 +18,30 @@ st.markdown("""
 Analyze and compare solar irradiance metrics across Benin 🇧🇯, Togo 🇹🇬, and Sierra Leone 🇸🇱.
 """)
 
-# Load data (assuming data is in '../data/')
+# Load data 
 @st.cache_data
 def load_data():
-    benin = pd.read_csv("data/benin_clean.csv")
-    togo = pd.read_csv("data/togo_clean.csv")
-    sl = pd.read_csv("data/sierraleone_clean.csv")
-
-    benin['country'] = 'Benin'
-    togo['country'] = 'Togo'
-    sl['country'] = 'Sierra Leone'
-
-    return pd.concat([benin, togo, sl], ignore_index=True)
+    try:
+        df_benin = pd.read_csv("data/benin_clean.csv")
+        df_togo = pd.read_csv("data/togo_clean.csv")
+        df_sl = pd.read_csv("data/sierraleone_clean.csv")
+        
+        df_benin["country"] = "Benin"
+        df_togo["country"] = "Togo"
+        df_sl["country"] = "Sierra Leone"
+        
+        df = pd.concat([df_benin, df_togo, df_sl], ignore_index=True)
+    except FileNotFoundError:
+        st.warning("⚠️ Data files not found. Using fallback sample data.")
+        data = {
+            "country": ["Benin", "Togo", "Sierra Leone"],
+            "ghi": [5.1, 4.9, 5.2],
+            "temperature": [28, 29, 27],
+            "month": ["Jan", "Jan", "Jan"]
+        }
+        df = pd.DataFrame(data)
+    
+    return df
 
 # Plot function
 def plot_irradiance_distribution(df, metric):
