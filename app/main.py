@@ -30,42 +30,31 @@ class SolarDashboard:
             df = pd.concat([df_benin, df_togo, df_sl], ignore_index=True)
         except FileNotFoundError:
             st.warning("⚠️ Data files not found. Using fallback simulated data.")
-
-            # Simulate 30 records per country
             countries = ["Benin", "Togo", "Sierra Leone"]
             rows_per_country = 30
-
             df = pd.DataFrame({
-                "country": np.repeat(countries, rows_per_country),
-                "GHI": np.concatenate([
-                    np.random.normal(5.1, 0.2, rows_per_country),  # Benin
-                    np.random.normal(4.9, 0.2, rows_per_country),  # Togo
-                    np.random.normal(5.3, 0.2, rows_per_country),  # Sierra Leone
-                ]),
-                "DNI": np.concatenate([
-                    np.random.normal(6.1, 0.3, rows_per_country),
-                    np.random.normal(6.0, 0.3, rows_per_country),
-                    np.random.normal(6.2, 0.3, rows_per_country),
-                ]),
-                "DHI": np.concatenate([
-                    np.random.normal(1.1, 0.1, rows_per_country),
-                    np.random.normal(1.0, 0.1, rows_per_country),
-                    np.random.normal(1.2, 0.1, rows_per_country),
-                ]),
+                "country": sum([[c]*rows_per_country for c in countries], []),
+                "GHI": sum([list(np.random.normal(5.0 + i*0.1, 0.2, rows_per_country)) for i in range(3)], []),
+                "DNI": sum([list(np.random.normal(6.0 + i*0.1, 0.3, rows_per_country)) for i in range(3)], []),
+                "DHI": sum([list(np.random.normal(1.1, 0.1, rows_per_country)) for _ in range(3)], []),
                 "temperature": np.tile(np.random.normal(28, 1, rows_per_country), 3),
-                "month": np.tile(["Jan", "Feb", "Mar"], int(rows_per_country * len(countries) / 3))
+                "month": np.tile(["Jan", "Feb", "Mar"], int(rows_per_country * 3 / 3))
             })
-
         return df
 
+    def sidebar_filters(self):
+        st.sidebar.header("🔎 Filters")
+        available_metrics = [col for col in ['GHI', 'DNI', 'DHI'] if col in self.df.columns]
+        self.metric = st.sidebar.selectbox("Select Irradiance Metric", available_metrics)
+        self.country_option = st.sidebar.selectbox("Select Country", sorted(self.df['country'].unique()))
 
     def plot_irradiance_distribution(self):
-        fig, ax = plt.subplots(figsize=(10, 5))
+        fig, ax = plt.subplots(figsize=(8, 4))
         sns.boxplot(x='country', y=self.metric, data=self.df, palette='viridis', ax=ax)
         ax.set_title(f"{self.metric} Distribution by Country")
         ax.set_ylabel(f"{self.metric} (kWh/m²/day)")
         ax.set_xlabel("")
-        st.pyplot(fig)
+        st.pyplot(fig, use_container_width=True)
 
     def show_summary(self):
         st.subheader("📊 Summary Statistics")
@@ -74,49 +63,37 @@ class SolarDashboard:
             .agg(['mean', 'median', 'std'])
             .round(2)
         )
-        st.dataframe(summary_df)
-
-    def show_boxplot(self):
-        st.subheader(f"📈 {self.metric} Comparison")
-        self.plot_irradiance_distribution()
+        st.dataframe(summary_df, use_container_width=True)
 
     def show_country_trends(self):
-        st.subheader("📌 Country Trends")
-        self.country_option = st.selectbox("Select Country", self.df['country'].unique())
-
-        with st.expander("📉 View Daily Irradiance Trends"):
-            country_df = self.df[self.df['country'] == self.country_option]
-            if 'datetime' in country_df.columns:
-                country_df = country_df.copy()
-                country_df['datetime'] = pd.to_datetime(country_df['datetime'])
-                country_df.set_index('datetime', inplace=True)
-                daily_avg = country_df[[self.metric]].resample('D').mean()
-
-                fig2, ax2 = plt.subplots(figsize=(10, 4))
-                daily_avg.plot(ax=ax2, legend=False, color='orange')
-                ax2.set_title(f"Daily Average {self.metric} in {self.country_option}")
-                ax2.set_ylabel(f"{self.metric} (kWh/m²/day)")
-                st.pyplot(fig2)
-            else:
-                st.info("ℹ️ No datetime column found for trend visualization in this dataset.")
-
-    def sidebar_filters(self):
-        st.sidebar.header("🔎 Filters")
-        available_metrics = [col for col in ['GHI', 'DNI', 'DHI'] if col in self.df.columns]
-        self.metric = st.sidebar.selectbox("Select Irradiance Metric", available_metrics)
+        st.subheader("📉 Daily Irradiance Trends")
+        country_df = self.df[self.df['country'] == self.country_option]
+        if 'datetime' in country_df.columns:
+            country_df = country_df.copy()
+            country_df['datetime'] = pd.to_datetime(country_df['datetime'])
+            country_df.set_index('datetime', inplace=True)
+            daily_avg = country_df[[self.metric]].resample('D').mean()
+            fig, ax = plt.subplots(figsize=(10, 3))
+            daily_avg.plot(ax=ax, legend=False, color='orange')
+            ax.set_title(f"Daily Average {self.metric} in {self.country_option}")
+            ax.set_ylabel(f"{self.metric} (kWh/m²/day)")
+            st.pyplot(fig, use_container_width=True)
+        else:
+            st.info("ℹ️ No datetime column found for trend visualization.")
 
     def run(self):
         st.title("🌍 Cross-Country Solar Potential Dashboard")
         st.markdown("Analyze and compare solar irradiance metrics across Benin 🇧🇯, Togo 🇹🇬, and Sierra Leone 🇸🇱.")
-        
         self.sidebar_filters()
-        self.show_summary()
-        self.show_boxplot()
+        col1, col2 = st.columns(2)
+        with col1:
+            self.show_summary()
+        with col2:
+            self.plot_irradiance_distribution()
+        st.divider()
         self.show_country_trends()
-
         st.markdown("---")
         st.markdown("Made with ❤️ for 10 Academy Week 1 Challenge — MoonLight Energy Solutions 🌞")
-
 
 if __name__ == "__main__":
     dashboard = SolarDashboard()
