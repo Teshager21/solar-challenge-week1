@@ -5,4 +5,10 @@ scikit-learn==1.6.1
 scipy==1.13.1
 seaborn==0.13.2
 windrose==1.9.2
-streamlit
+streamlit==1.35.0
+Pillow==9.5.0
+python-dotenv==1.0.1
+openpyxl==3.1.2
+flake8==6.1.0
+pytest==8.2.0
+plotly==5.22.0
