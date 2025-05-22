@@ -4,13 +4,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 
-# Set Streamlit page config as the first Streamlit command
+# Must be the first Streamlit command
 st.set_page_config(page_title="🌞 Solar Potential Dashboard", layout="wide")
+
 
 class SolarDashboard:
     def __init__(self):
         self.df = self.load_data()
-        self.metric = None
+        self.metric = 'GHI'  # default fallback
         self.country_option = None
 
     @staticmethod
@@ -20,38 +21,45 @@ class SolarDashboard:
             df_benin = pd.read_csv("data/benin_clean.csv")
             df_togo = pd.read_csv("data/togo_clean.csv")
             df_sl = pd.read_csv("data/sierraleone_clean.csv")
-            
+
             df_benin["country"] = "Benin"
             df_togo["country"] = "Togo"
             df_sl["country"] = "Sierra Leone"
-            
+
             df = pd.concat([df_benin, df_togo, df_sl], ignore_index=True)
         except FileNotFoundError:
             st.warning("⚠️ Data files not found. Using fallback sample data.")
             data = {
                 "country": ["Benin", "Togo", "Sierra Leone"],
-                "ghi": [5.1, 4.9, 5.2],
+                "GHI": [5.1, 4.9, 5.2],
+                "DNI": [6.2, 6.0, 6.3],
+                "DHI": [1.2, 1.1, 1.3],
                 "temperature": [28, 29, 27],
                 "month": ["Jan", "Jan", "Jan"]
             }
             df = pd.DataFrame(data)
         return df
 
-    def plot_irradiance_distribution(self, metric):
+    def plot_irradiance_distribution(self):
         fig, ax = plt.subplots(figsize=(10, 5))
-        sns.boxplot(x='country', y=metric, data=self.df, palette='viridis', ax=ax)
-        ax.set_title(f"{metric} Distribution by Country")
-        ax.set_ylabel(f"{metric} (kWh/m²/day)")
+        sns.boxplot(x='country', y=self.metric, data=self.df, palette='viridis', ax=ax)
+        ax.set_title(f"{self.metric} Distribution by Country")
+        ax.set_ylabel(f"{self.metric} (kWh/m²/day)")
         ax.set_xlabel("")
         st.pyplot(fig)
 
     def show_summary(self):
         st.subheader("📊 Summary Statistics")
-        st.dataframe(self.df.groupby('country')[[self.metric]].agg(['mean', 'median', 'std']).round(2))
+        summary_df = (
+            self.df.groupby('country')[[self.metric]]
+            .agg(['mean', 'median', 'std'])
+            .round(2)
+        )
+        st.dataframe(summary_df)
 
     def show_boxplot(self):
         st.subheader(f"📈 {self.metric} Comparison")
-        self.plot_irradiance_distribution(self.metric)
+        self.plot_irradiance_distribution()
 
     def show_country_trends(self):
         st.subheader("📌 Country Trends")
@@ -71,23 +79,25 @@ class SolarDashboard:
                 ax2.set_ylabel(f"{self.metric} (kWh/m²/day)")
                 st.pyplot(fig2)
             else:
-                st.info("No datetime column found for trend visualization.")
+                st.info("ℹ️ No datetime column found for trend visualization in this dataset.")
 
     def sidebar_filters(self):
         st.sidebar.header("🔎 Filters")
-        self.metric = st.sidebar.selectbox("Select Irradiance Metric", ['GHI', 'DNI', 'DHI'])
+        available_metrics = [col for col in ['GHI', 'DNI', 'DHI'] if col in self.df.columns]
+        self.metric = st.sidebar.selectbox("Select Irradiance Metric", available_metrics)
 
     def run(self):
         st.title("🌍 Cross-Country Solar Potential Dashboard")
-        st.markdown("""
-        Analyze and compare solar irradiance metrics across Benin 🇧🇯, Togo 🇹🇬, and Sierra Leone 🇸🇱.
-        """)
+        st.markdown("Analyze and compare solar irradiance metrics across Benin 🇧🇯, Togo 🇹🇬, and Sierra Leone 🇸🇱.")
+        
         self.sidebar_filters()
         self.show_summary()
         self.show_boxplot()
         self.show_country_trends()
+
         st.markdown("---")
         st.markdown("Made with ❤️ for 10 Academy Week 1 Challenge — MoonLight Energy Solutions 🌞")
+
 
 if __name__ == "__main__":
     dashboard = SolarDashboard()
