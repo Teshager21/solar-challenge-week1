@@ -4,17 +4,27 @@ import pandas as pd
 from windrose import WindroseAxes
 from scipy.stats import zscore
 
+
 class SolarVisualizer:
-    def __init__(self, df):
-        self.df = df
+    def __init__(self, df: pd.DataFrame):
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError("Input must be a pandas DataFrame")
+        self.df = df.copy()
+
+    def _ensure_columns_exist(self, required_cols):
+        missing = [col for col in required_cols if col not in self.df.columns]
+        if missing:
+            raise ValueError(f"Missing required columns: {missing}")
 
     def plot_continuous_histograms(self, n_cols=3, bins=30, color='teal'):
         continuous_cols = self.df.select_dtypes(include=['float64', 'int64']).columns
+        if continuous_cols.empty:
+            raise ValueError("No continuous columns found for plotting.")
         n_rows = (len(continuous_cols) + n_cols - 1) // n_cols
         plt.figure(figsize=(5 * n_cols, 4 * n_rows))
         for i, col in enumerate(continuous_cols, 1):
             plt.subplot(n_rows, n_cols, i)
-            sns.histplot(self.df[col], kde=True, bins=bins, color=color)
+            sns.histplot(self.df[col].dropna(), kde=True, bins=bins, color=color)
             plt.title(f'Histogram of {col}')
             plt.xlabel(col)
             plt.ylabel('Frequency')
@@ -22,45 +32,39 @@ class SolarVisualizer:
         plt.show()
 
     def plot_scatter_relationships(self):
+        self._ensure_columns_exist(['WS', 'GHI', 'WSgust', 'WD', 'RH', 'Tamb'])
         sns.set(style="whitegrid")
         plt.figure(figsize=(16, 12))
-        plt.subplot(2, 3, 1)
-        sns.scatterplot(data=self.df, x='WS', y='GHI', alpha=0.5)
-        plt.title('Wind Speed (WS) vs GHI')
-        plt.subplot(2, 3, 2)
-        sns.scatterplot(data=self.df, x='WSgust', y='GHI', alpha=0.5, color='orange')
-        plt.title('Wind Gust (WSgust) vs GHI')
-        plt.subplot(2, 3, 3)
-        sns.scatterplot(data=self.df, x='WD', y='GHI', alpha=0.5, color='green')
-        plt.title('Wind Direction (WD) vs GHI')
-        plt.subplot(2, 3, 4)
-        sns.scatterplot(data=self.df, x='RH', y='Tamb', alpha=0.5, color='purple')
-        plt.title('Relative Humidity (RH) vs Ambient Temperature (Tamb)')
-        plt.subplot(2, 3, 5)
-        sns.scatterplot(data=self.df, x='RH', y='GHI', alpha=0.5, color='red')
-        plt.title('Relative Humidity (RH) vs GHI')
+        plots = [
+            ('WS', 'GHI'),
+            ('WSgust', 'GHI'),
+            ('WD', 'GHI'),
+            ('RH', 'Tamb'),
+            ('RH', 'GHI')
+        ]
+        for i, (x, y) in enumerate(plots, 1):
+            plt.subplot(2, 3, i)
+            sns.scatterplot(data=self.df, x=x, y=y, alpha=0.5)
+            plt.title(f'{x} vs {y}')
         plt.tight_layout()
         plt.show()
 
     def plot_rh_relationships(self):
+        self._ensure_columns_exist(['RH', 'Tamb', 'GHI'])
         sns.set(style="whitegrid", context="notebook")
         plt.figure(figsize=(12, 5))
-        plt.subplot(1, 2, 1)
-        sns.scatterplot(data=self.df, x='RH', y='Tamb', alpha=0.4)
-        sns.regplot(data=self.df, x='RH', y='Tamb', scatter=False, color='red')
-        plt.title('Relative Humidity vs Ambient Temperature')
-        plt.xlabel('Relative Humidity (%)')
-        plt.ylabel('Ambient Temperature (°C)')
-        plt.subplot(1, 2, 2)
-        sns.scatterplot(data=self.df, x='RH', y='GHI', alpha=0.4)
-        sns.regplot(data=self.df, x='RH', y='GHI', scatter=False, color='red')
-        plt.title('Relative Humidity vs Solar Radiation (GHI)')
-        plt.xlabel('Relative Humidity (%)')
-        plt.ylabel('GHI (W/m²)')
+        for i, y in enumerate(['Tamb', 'GHI'], 1):
+            plt.subplot(1, 2, i)
+            sns.scatterplot(data=self.df, x='RH', y=y, alpha=0.4)
+            sns.regplot(data=self.df, x='RH', y=y, scatter=False, color='red')
+            plt.title(f'Relative Humidity vs {y}')
+            plt.xlabel('Relative Humidity (%)')
+            plt.ylabel(y)
         plt.tight_layout()
         plt.show()
 
     def plot_bubble_ghi_vs_tamb(self, size_col='RH', color_col='RH'):
+        self._ensure_columns_exist(['Tamb', 'GHI', size_col, color_col])
         plt.figure(figsize=(10, 6))
         scatter = plt.scatter(
             self.df['Tamb'], self.df['GHI'],
@@ -72,9 +76,11 @@ class SolarVisualizer:
         plt.ylabel('Global Horizontal Irradiance (GHI) (W/m²)')
         plt.colorbar(scatter, label=f'{color_col} (%)')
         plt.grid(True)
+        plt.tight_layout()
         plt.show()
 
     def plot_mod_cleaning_effect(self):
+        self._ensure_columns_exist(['Cleaning', 'ModA', 'ModB'])
         mod_cleaning_avg = self.df.groupby('Cleaning')[['ModA', 'ModB']].mean().reset_index()
         mod_cleaning_avg['Cleaning'] = mod_cleaning_avg['Cleaning'].map({0: 'Pre-Cleaning', 1: 'Post-Cleaning'})
         mod_cleaning_avg.set_index('Cleaning').plot(kind='bar', figsize=(8, 5), colormap='Paired')
@@ -86,6 +92,7 @@ class SolarVisualizer:
         plt.show()
 
     def plot_irradiance_temperature_timeseries(self):
+        self._ensure_columns_exist(['Timestamp', 'GHI', 'DNI', 'DHI', 'Tamb'])
         df_plot = self.df.copy()
         df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
         df_plot = df_plot.set_index('Timestamp')
@@ -100,15 +107,13 @@ class SolarVisualizer:
         plt.show()
 
     def plot_monthly_irradiance_temperature(self):
+        self._ensure_columns_exist(['Timestamp', 'GHI', 'DNI', 'DHI', 'Tamb'])
         df_plot = self.df.copy()
-        if not pd.api.types.is_datetime64_any_dtype(df_plot.index):
-            if 'Timestamp' in df_plot.columns:
-                df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
-                df_plot = df_plot.set_index('Timestamp')
-            else:
-                raise ValueError("DataFrame must have a datetime index or a 'Timestamp' column.")
+        df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
+        df_plot = df_plot.set_index('Timestamp')
         df_plot['Month'] = df_plot.index.month_name()
-        monthly_avg = df_plot.groupby('Month')[['GHI', 'DNI', 'DHI', 'Tamb']].mean().reindex([
+        monthly_avg = df_plot.groupby('Month')[['GHI', 'DNI', 'DHI', 'Tamb']].mean()
+        monthly_avg = monthly_avg.reindex([
             'January','February','March','April','May','June',
             'July','August','September','October','November','December'
         ])
@@ -120,13 +125,10 @@ class SolarVisualizer:
         plt.show()
 
     def plot_hourly_irradiance_temperature(self):
+        self._ensure_columns_exist(['Timestamp', 'GHI', 'DNI', 'DHI', 'Tamb'])
         df_plot = self.df.copy()
-        if not pd.api.types.is_datetime64_any_dtype(df_plot.index):
-            if 'Timestamp' in df_plot.columns:
-                df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
-                df_plot = df_plot.set_index('Timestamp')
-            else:
-                raise ValueError("DataFrame must have a datetime index or a 'Timestamp' column.")
+        df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
+        df_plot = df_plot.set_index('Timestamp')
         df_plot['Hour'] = df_plot.index.hour
         hourly_avg = df_plot.groupby('Hour')[['GHI', 'DNI', 'DHI', 'Tamb']].mean()
         hourly_avg.plot(figsize=(14,6), marker='o')
@@ -138,13 +140,10 @@ class SolarVisualizer:
         plt.show()
 
     def plot_ghi_anomalies(self):
+        self._ensure_columns_exist(['Timestamp', 'GHI'])
         df_plot = self.df.copy()
-        if not pd.api.types.is_datetime64_any_dtype(df_plot.index):
-            if 'Timestamp' in df_plot.columns:
-                df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
-                df_plot = df_plot.set_index('Timestamp')
-            else:
-                raise ValueError("DataFrame must have a datetime index or a 'Timestamp' column.")
+        df_plot['Timestamp'] = pd.to_datetime(df_plot['Timestamp'])
+        df_plot = df_plot.set_index('Timestamp')
         ghi_threshold = df_plot['GHI'].mean() + 3 * df_plot['GHI'].std()
         plt.figure(figsize=(15,5))
         plt.plot(df_plot.index, df_plot['GHI'], label='GHI')
@@ -156,9 +155,10 @@ class SolarVisualizer:
         plt.tight_layout()
         plt.show()
         anomalies = df_plot[df_plot['GHI'] > ghi_threshold]
-        print(f"⚠️ GHI Anomalies Detected:\n{anomalies[['GHI']]}")
+        print(f"\n⚠️ GHI Anomalies Detected:\n{anomalies[['GHI']]}")
 
     def plot_wind_rose(self):
+        self._ensure_columns_exist(['WD', 'WS'])
         df_clean = self.df[['WD', 'WS']].dropna()
         ax = WindroseAxes.from_ax()
         ax.bar(df_clean['WD'], df_clean['WS'], normed=True, opening=0.8, edgecolor='white')
@@ -167,6 +167,7 @@ class SolarVisualizer:
         plt.show()
 
     def plot_correlation_heatmap(self, columns):
+        self._ensure_columns_exist(columns)
         corr_matrix = self.df[columns].corr()
         plt.figure(figsize=(8, 6))
         sns.heatmap(corr_matrix, annot=True, fmt=".2f", cmap="coolwarm", square=True, linewidths=0.5)
@@ -177,19 +178,23 @@ class SolarVisualizer:
         plt.show()
 
     def plot_pairplot(self, columns):
+        self._ensure_columns_exist(columns)
         pairplot_df = self.df[columns].dropna()
         sns.pairplot(pairplot_df, diag_kind='kde', corner=True, plot_kws={'alpha': 0.5})
         plt.suptitle("Pair Plot of Selected Solar Variables", y=1.02, fontsize=14)
         plt.show()
 
     def plot_outlier_stripplots(self, columns_to_check_for_outliers):
+        self._ensure_columns_exist(columns_to_check_for_outliers)
         n_cols = 2
         n_rows = (len(columns_to_check_for_outliers) + n_cols - 1) // n_cols
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(8 * n_cols, 2 * n_rows))
         axes = axes.flatten()
         for i, col in enumerate(columns_to_check_for_outliers):
-            self.df['z'] = zscore(self.df[col].dropna())
-            sns.stripplot(x='z', data=self.df.dropna(subset=[col]), color='orange', ax=axes[i])
+            z_scores = zscore(self.df[col].dropna())
+            temp_df = self.df.dropna(subset=[col]).copy()
+            temp_df['z'] = z_scores
+            sns.stripplot(x='z', data=temp_df, color='orange', ax=axes[i])
             axes[i].axvline(3, color='red', linestyle='--')
             axes[i].axvline(-3, color='red', linestyle='--')
             axes[i].set_title(f'Z-score Strip Plot: {col}')
@@ -198,10 +203,9 @@ class SolarVisualizer:
             fig.delaxes(axes[j])
         plt.tight_layout()
         plt.show()
-        if 'z' in self.df.columns:
-            self.df.drop(columns=['z'], inplace=True)
 
     def plot_outlier_boxplots(self, columns_to_check_for_outliers):
+        self._ensure_columns_exist(columns_to_check_for_outliers)
         plt.figure(figsize=(max(8, len(columns_to_check_for_outliers) * 1.5), 6))
         sns.set_context("notebook", font_scale=1.1)
         sns.boxplot(data=self.df[columns_to_check_for_outliers], palette="Set2")
@@ -212,25 +216,21 @@ class SolarVisualizer:
         plt.show()
 
     def plot_boxplots_comparison(self):
+        self._ensure_columns_exist(['country', 'GHI', 'DNI', 'DHI'])
         sns.set(style="whitegrid")
         fig, axes = plt.subplots(1, 3, figsize=(20, 6))
-        sns.boxplot(x='country', y='GHI', data=self.df, ax=axes[0], palette="Set2")
-        axes[0].set_title('📦 GHI Distribution by Country', fontsize=14)
-        axes[0].set_xlabel('')
-        axes[0].set_ylabel('GHI (W/m²)', fontsize=12)
-        sns.boxplot(x='country', y='DNI', data=self.df, ax=axes[1], palette="Set2")
-        axes[1].set_title('📦 DNI Distribution by Country', fontsize=14)
-        axes[1].set_xlabel('')
-        axes[1].set_ylabel('DNI (W/m²)', fontsize=12)
-        sns.boxplot(x='country', y='DHI', data=self.df, ax=axes[2], palette="Set2")
-        axes[2].set_title('📦 DHI Distribution by Country', fontsize=14)
-        axes[2].set_xlabel('')
-        axes[2].set_ylabel('DHI (W/m²)', fontsize=12)
+        metrics = ['GHI', 'DNI', 'DHI']
+        for i, metric in enumerate(metrics):
+            sns.boxplot(x='country', y=metric, data=self.df, ax=axes[i], palette="Set2")
+            axes[i].set_title(f'📦 {metric} Distribution by Country', fontsize=14)
+            axes[i].set_xlabel('')
+            axes[i].set_ylabel(f'{metric} (W/m²)', fontsize=12)
         plt.suptitle('☀️ Solar Radiation Metrics by Country', fontsize=16, y=1.02)
         plt.tight_layout()
         plt.show()
 
     def plot_avg_ghi_by_country(self):
+        self._ensure_columns_exist(['country', 'GHI'])
         avg_ghi = self.df.groupby('country')['GHI'].mean().sort_values(ascending=False)
         sns.barplot(x=avg_ghi.values, y=avg_ghi.index, palette='viridis')
         plt.title('Average GHI by Country')
