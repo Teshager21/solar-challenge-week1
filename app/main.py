@@ -3,6 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+import numpy as np
 
 # Must be the first Streamlit command
 st.set_page_config(page_title="🌞 Solar Potential Dashboard", layout="wide")
@@ -28,17 +29,35 @@ class SolarDashboard:
 
             df = pd.concat([df_benin, df_togo, df_sl], ignore_index=True)
         except FileNotFoundError:
-            st.warning("⚠️ Data files not found. Using fallback sample data.")
-            data = {
-                "country": ["Benin", "Togo", "Sierra Leone"],
-                "GHI": [5.1, 4.9, 5.2],
-                "DNI": [6.2, 6.0, 6.3],
-                "DHI": [1.2, 1.1, 1.3],
-                "temperature": [28, 29, 27],
-                "month": ["Jan", "Jan", "Jan"]
-            }
-            df = pd.DataFrame(data)
+            st.warning("⚠️ Data files not found. Using fallback simulated data.")
+
+            # Simulate 30 records per country
+            countries = ["Benin", "Togo", "Sierra Leone"]
+            rows_per_country = 30
+
+            df = pd.DataFrame({
+                "country": np.repeat(countries, rows_per_country),
+                "GHI": np.concatenate([
+                    np.random.normal(5.1, 0.2, rows_per_country),  # Benin
+                    np.random.normal(4.9, 0.2, rows_per_country),  # Togo
+                    np.random.normal(5.3, 0.2, rows_per_country),  # Sierra Leone
+                ]),
+                "DNI": np.concatenate([
+                    np.random.normal(6.1, 0.3, rows_per_country),
+                    np.random.normal(6.0, 0.3, rows_per_country),
+                    np.random.normal(6.2, 0.3, rows_per_country),
+                ]),
+                "DHI": np.concatenate([
+                    np.random.normal(1.1, 0.1, rows_per_country),
+                    np.random.normal(1.0, 0.1, rows_per_country),
+                    np.random.normal(1.2, 0.1, rows_per_country),
+                ]),
+                "temperature": np.tile(np.random.normal(28, 1, rows_per_country), 3),
+                "month": np.tile(["Jan", "Feb", "Mar"], int(rows_per_country * len(countries) / 3))
+            })
+
         return df
+
 
     def plot_irradiance_distribution(self):
         fig, ax = plt.subplots(figsize=(10, 5))

@@ -7,7 +7,7 @@
 
 An interactive dashboard to explore solar potential across Benin, Togo, and Sierra Leone.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://solar-challenge-week1-duuesqvcmfbwlyew8ffis3.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://solar-challenge-week1-srciwinqcgpf22litkpyhb.streamlit.app/)
 
 
 
